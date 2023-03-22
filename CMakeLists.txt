@@ -173,7 +173,7 @@ gflags_define (BOOL BUILD_STATIC_LIBS          "Request build of static librarie
 gflags_define (BOOL BUILD_gflags_LIB           "Request build of the multi-threaded gflags library."                      ON  OFF)
 gflags_define (BOOL BUILD_gflags_nothreads_LIB "Request build of the single-threaded gflags library."                     ON  ON)
 gflags_define (BOOL BUILD_PACKAGING            "Enable build of distribution packages using CPack."                       OFF OFF)
-gflags_define (BOOL BUILD_TESTING              "Enable build of the unit tests and their execution using CTest."          OFF OFF)
+gflags_define (BOOL BUILD_TESTING              "Enable build of the unit tests and their execution using CTest."          ON ON)
 gflags_define (BOOL INSTALL_HEADERS            "Request installation of headers and other development files."             ON  OFF)
 gflags_define (BOOL INSTALL_SHARED_LIBS        "Request installation of shared libraries."                                ON  ON)
 gflags_define (BOOL INSTALL_STATIC_LIBS        "Request installation of static libraries."                                ON  OFF)
