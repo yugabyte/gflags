@@ -78,6 +78,7 @@
 
 // ---------------------------------------------------------------------------
 // Flag types
+#include <atomic>
 #include <string>
 #if @HAVE_STDINT_H@
 #  include <stdint.h>                   // the normal place uint32_t is defined
@@ -107,6 +108,13 @@ typedef unsigned __int64 uint64;
 #else
 #  error Do not know how to define a 32-bit integer quantity on your system
 #endif
+
+typedef std::atomic<bool> atomic_bool;
+typedef std::atomic<int32> atomic_int32;
+typedef std::atomic<uint32> atomic_uint32;
+typedef std::atomic<int64> atomic_int64;
+typedef std::atomic<uint64> atomic_uint64;
+typedef std::atomic<double> atomic_double;
 
 } // namespace GFLAGS_NAMESPACE
 

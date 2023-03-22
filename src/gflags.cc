@@ -262,12 +262,12 @@ DEFINE_FLAG_TRAITS(int64, FV_INT64);
 DEFINE_FLAG_TRAITS(uint64, FV_UINT64);
 DEFINE_FLAG_TRAITS(double, FV_DOUBLE);
 DEFINE_FLAG_TRAITS(std::string, FV_STRING);
-DEFINE_FLAG_TRAITS(std::atomic<bool>, FV_ABOOL);
-DEFINE_FLAG_TRAITS(std::atomic<int32>, FV_AINT32);
-DEFINE_FLAG_TRAITS(std::atomic<uint32>, FV_AUINT32);
-DEFINE_FLAG_TRAITS(std::atomic<int64>, FV_AINT64);
-DEFINE_FLAG_TRAITS(std::atomic<uint64>, FV_AUINT64);
-DEFINE_FLAG_TRAITS(std::atomic<double>, FV_ADOUBLE);
+DEFINE_FLAG_TRAITS(atomic_bool, FV_ABOOL);
+DEFINE_FLAG_TRAITS(atomic_int32, FV_AINT32);
+DEFINE_FLAG_TRAITS(atomic_uint32, FV_AUINT32);
+DEFINE_FLAG_TRAITS(atomic_int64, FV_AINT64);
+DEFINE_FLAG_TRAITS(atomic_uint64, FV_AUINT64);
+DEFINE_FLAG_TRAITS(atomic_double, FV_ADOUBLE);
 
 #undef DEFINE_FLAG_TRAITS
 
@@ -298,12 +298,12 @@ FlagValue::~FlagValue() {
     case FV_UINT64: delete reinterpret_cast<uint64*>(value_buffer_); break;
     case FV_DOUBLE: delete reinterpret_cast<double*>(value_buffer_); break;
     case FV_STRING: delete reinterpret_cast<string*>(value_buffer_); break;
-    case FV_ABOOL: delete reinterpret_cast<std::atomic<bool>*>(value_buffer_); break;
-    case FV_AINT32: delete reinterpret_cast<std::atomic<int32>*>(value_buffer_); break;
-    case FV_AUINT32: delete reinterpret_cast<std::atomic<uint32>*>(value_buffer_); break;
-    case FV_AINT64: delete reinterpret_cast<std::atomic<int64>*>(value_buffer_); break;
-    case FV_AUINT64: delete reinterpret_cast<std::atomic<uint64>*>(value_buffer_); break;
-    case FV_ADOUBLE: delete reinterpret_cast<std::atomic<double>*>(value_buffer_); break;
+    case FV_ABOOL: delete reinterpret_cast<atomic_bool*>(value_buffer_); break;
+    case FV_AINT32: delete reinterpret_cast<atomic_int32*>(value_buffer_); break;
+    case FV_AUINT32: delete reinterpret_cast<atomic_uint32*>(value_buffer_); break;
+    case FV_AINT64: delete reinterpret_cast<atomic_int64*>(value_buffer_); break;
+    case FV_AUINT64: delete reinterpret_cast<atomic_uint64*>(value_buffer_); break;
+    case FV_ADOUBLE: delete reinterpret_cast<atomic_double*>(value_buffer_); break;
   }
 }
 
@@ -437,6 +437,24 @@ bool FlagValue::Validate(const char* flagname,
     case FV_STRING:
       return reinterpret_cast<bool (*)(const char*, const string&)>(
           validate_fn_proto)(flagname, VALUE_AS(string));
+    case FV_ABOOL:
+      return reinterpret_cast<bool (*)(const char*, bool)>(
+          validate_fn_proto)(flagname, VALUE_AS(atomic_bool));
+    case FV_AINT32:
+      return reinterpret_cast<bool (*)(const char*, int32)>(
+          validate_fn_proto)(flagname, VALUE_AS(atomic_int32));
+    case FV_AUINT32:
+      return reinterpret_cast<bool (*)(const char*, uint32)>(
+          validate_fn_proto)(flagname, VALUE_AS(atomic_uint32));
+    case FV_AINT64:
+      return reinterpret_cast<bool (*)(const char*, int64)>(
+          validate_fn_proto)(flagname, VALUE_AS(atomic_int64));
+    case FV_AUINT64:
+      return reinterpret_cast<bool (*)(const char*, uint64)>(
+          validate_fn_proto)(flagname, VALUE_AS(atomic_uint64));
+    case FV_ADOUBLE:
+      return reinterpret_cast<bool (*)(const char*, double)>(
+          validate_fn_proto)(flagname, VALUE_AS(atomic_double));
     default:
       assert(false);  // unknown type
       return false;
@@ -451,7 +469,15 @@ const char* FlagValue::TypeName() const {
       "int64\0x"
       "uint64\0"
       "double\0"
-      "string";
+      "string\0"
+      "bool\0xx"
+      "int32\0x"
+      "uint32\0"
+      "int64\0x"
+      "uint64\0"
+      "double";
+
+  fprintf(stdout, "Running the unit tests now...\n\n"); fflush(stdout);
   if (type_ > FV_MAX_INDEX) {
     assert(false);
     return "";
@@ -1475,6 +1501,12 @@ INSTANTIATE_FLAG_REGISTERER_CTOR(int64);
 INSTANTIATE_FLAG_REGISTERER_CTOR(uint64);
 INSTANTIATE_FLAG_REGISTERER_CTOR(double);
 INSTANTIATE_FLAG_REGISTERER_CTOR(std::string);
+INSTANTIATE_FLAG_REGISTERER_CTOR(atomic_bool);
+INSTANTIATE_FLAG_REGISTERER_CTOR(atomic_int32);
+INSTANTIATE_FLAG_REGISTERER_CTOR(atomic_uint32);
+INSTANTIATE_FLAG_REGISTERER_CTOR(atomic_int64);
+INSTANTIATE_FLAG_REGISTERER_CTOR(atomic_uint64);
+INSTANTIATE_FLAG_REGISTERER_CTOR(atomic_double);
 
 #undef INSTANTIATE_FLAG_REGISTERER_CTOR
 
@@ -1983,6 +2015,7 @@ static uint32 ParseCommandLineFlagsInternal(int* argc, char*** argv,
 }
 
 uint32 ParseCommandLineFlags(int* argc, char*** argv, bool remove_flags) {
+  fprintf(stdout, "hk!! pcf\n\n"); fflush(stdout);
   return ParseCommandLineFlagsInternal(argc, argv, remove_flags, true);
 }
 

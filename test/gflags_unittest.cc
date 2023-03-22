@@ -80,6 +80,14 @@ DEFINE_uint64(test_uint64, 2, "");
 DEFINE_double(test_double, -1.0, "");
 DEFINE_string(test_string, "initial", "");
 
+static const std::atomic<bool> a (false);
+DEFINE_ATOMIC_bool(test_abool, false, "tests bool-ness");
+DEFINE_ATOMIC_int32(test_aint32, -1, "");
+DEFINE_ATOMIC_int64(test_aint64, -2, "");
+DEFINE_ATOMIC_uint32(test_auint32, 1, "");
+DEFINE_ATOMIC_uint64(test_auint64, 2, "");
+DEFINE_ATOMIC_double(test_adouble, -1.0, "");
+
 //
 // The below ugliness gets some additional code coverage in the -helpxml
 // and -helpmatch test cases having to do with string lengths and formatting
@@ -276,6 +284,7 @@ void AssertIsType(Actual& x) {
 
 // Verify all the flags are the right type.
 TEST(FlagTypes, FlagTypes) {
+  fprintf(stdout, "hk!!\n\n"); fflush(stdout);
   AssertIsType<bool>(FLAGS_test_bool);
   AssertIsType<int32>(FLAGS_test_int32);
   AssertIsType<int64>(FLAGS_test_int64);
@@ -283,6 +292,12 @@ TEST(FlagTypes, FlagTypes) {
   AssertIsType<uint64>(FLAGS_test_uint64);
   AssertIsType<double>(FLAGS_test_double);
   AssertIsType<string>(FLAGS_test_string);
+  AssertIsType<std::atomic<bool> >(FLAGS_test_abool);
+  AssertIsType<std::atomic<int32> >(FLAGS_test_aint32);
+  AssertIsType<std::atomic<int64> >(FLAGS_test_aint64);
+  AssertIsType<std::atomic<uint32> >(FLAGS_test_auint32);
+  AssertIsType<std::atomic<uint64> >(FLAGS_test_auint64);
+  AssertIsType<std::atomic<double> >(FLAGS_test_adouble);
 }
 
 #ifdef GTEST_HAS_DEATH_TEST
@@ -610,6 +625,12 @@ TEST(SetFlagValueTest, IllegalValues) {
   FLAGS_test_uint32 = 11911;
   FLAGS_test_uint64 = 119111;
 
+  FLAGS_test_abool = true;
+  FLAGS_test_aint32 = 119;
+  FLAGS_test_aint64 = 1191;
+  FLAGS_test_auint32 = 11911;
+  FLAGS_test_auint64 = 119111;
+
   EXPECT_EQ("",
             SetCommandLineOption("test_bool", "12"));
 
@@ -625,6 +646,21 @@ TEST(SetFlagValueTest, IllegalValues) {
   EXPECT_EQ("",
             SetCommandLineOption("test_int64", "not a number!"));
 
+  EXPECT_EQ("",
+            SetCommandLineOption("test_abool", "12"));
+
+  EXPECT_EQ("",
+            SetCommandLineOption("test_auint32", "-1970"));
+
+  EXPECT_EQ("",
+            SetCommandLineOption("test_aint32", "7000000000000"));
+
+  EXPECT_EQ("",
+            SetCommandLineOption("test_auint64", "-1"));
+
+  EXPECT_EQ("",
+            SetCommandLineOption("test_aint64", "not a number!"));
+
   // Test the empty string with each type of input
   EXPECT_EQ("", SetCommandLineOption("test_bool", ""));
   EXPECT_EQ("", SetCommandLineOption("test_int32", ""));
@@ -633,12 +669,23 @@ TEST(SetFlagValueTest, IllegalValues) {
   EXPECT_EQ("", SetCommandLineOption("test_uint64", ""));
   EXPECT_EQ("", SetCommandLineOption("test_double", ""));
   EXPECT_EQ("test_string set to \n", SetCommandLineOption("test_string", ""));
+  EXPECT_EQ("", SetCommandLineOption("test_abool", ""));
+  EXPECT_EQ("", SetCommandLineOption("test_aint32", ""));
+  EXPECT_EQ("", SetCommandLineOption("test_aint64", ""));
+  EXPECT_EQ("", SetCommandLineOption("test_auint32", ""));
+  EXPECT_EQ("", SetCommandLineOption("test_auint64", ""));
+  EXPECT_EQ("", SetCommandLineOption("test_adouble", ""));
 
   EXPECT_TRUE(FLAGS_test_bool);
   EXPECT_EQ(119, FLAGS_test_int32);
   EXPECT_EQ(1191, FLAGS_test_int64);
   EXPECT_EQ(11911, FLAGS_test_uint32);
   EXPECT_EQ(119111, FLAGS_test_uint64);
+  EXPECT_TRUE(FLAGS_test_abool);
+  EXPECT_EQ(119, FLAGS_test_aint32);
+  EXPECT_EQ(1191, FLAGS_test_aint64);
+  EXPECT_EQ(11911, FLAGS_test_auint32);
+  EXPECT_EQ(119111, FLAGS_test_auint64);
 }
 
 
@@ -852,6 +899,12 @@ TEST(FlagSaverTest, CanSaveVariousTypedFlagValues) {
   FLAGS_test_uint64 = 4;
   FLAGS_test_double = 5.0;
   FLAGS_test_string = "good";
+  FLAGS_test_abool = false;
+  FLAGS_test_aint32 = -1;
+  FLAGS_test_auint32 = 2;
+  FLAGS_test_aint64 = -3;
+  FLAGS_test_auint64 = 4;
+  FLAGS_test_adouble = 5.0;
 
   // Saves the flag states.
   {
@@ -865,6 +918,12 @@ TEST(FlagSaverTest, CanSaveVariousTypedFlagValues) {
     FLAGS_test_uint64 = 8;
     FLAGS_test_double = 8.0;
     FLAGS_test_string = "bad";
+    FLAGS_test_abool = true;
+    FLAGS_test_aint32 = -5;
+    FLAGS_test_auint32 = 6;
+    FLAGS_test_aint64 = -7;
+    FLAGS_test_auint64 = 8;
+    FLAGS_test_adouble = 8.0;
 
     // Restores the flag states.
   }
@@ -877,6 +936,12 @@ TEST(FlagSaverTest, CanSaveVariousTypedFlagValues) {
   EXPECT_EQ(4, FLAGS_test_uint64);
   EXPECT_DOUBLE_EQ(5.0, FLAGS_test_double);
   EXPECT_EQ("good", FLAGS_test_string);
+  EXPECT_FALSE(FLAGS_test_abool);
+  EXPECT_EQ(-1, FLAGS_test_aint32);
+  EXPECT_EQ(2, FLAGS_test_auint32);
+  EXPECT_EQ(-3, FLAGS_test_aint64);
+  EXPECT_EQ(4, FLAGS_test_auint64);
+  EXPECT_DOUBLE_EQ(5.0, FLAGS_test_adouble);
 }
 
 TEST(GetAllFlagsTest, BaseTest) {
@@ -1015,6 +1080,17 @@ TEST(GetCommandLineFlagInfoTest, FlagExists) {
   EXPECT_FALSE(info.has_validator_fn);
   EXPECT_EQ(&FLAGS_test_int32, info.flag_ptr);
 
+  r = GetCommandLineFlagInfo("test_aint32", &info);
+  EXPECT_TRUE(r);
+  EXPECT_EQ("test_aint32", info.name);
+  EXPECT_EQ("aint32", info.type);
+  EXPECT_EQ("", info.description);
+  EXPECT_EQ("-1", info.current_value);
+  EXPECT_EQ("-1", info.default_value);
+  EXPECT_TRUE(info.is_default);
+  EXPECT_FALSE(info.has_validator_fn);
+  EXPECT_EQ(&FLAGS_test_aint32, info.flag_ptr);
+
   FLAGS_test_bool = true;
   r = GetCommandLineFlagInfo("test_bool", &info);
   EXPECT_TRUE(r);
@@ -1038,6 +1114,30 @@ TEST(GetCommandLineFlagInfoTest, FlagExists) {
   EXPECT_FALSE(info.is_default);  // value is same, but flag *was* modified
   EXPECT_FALSE(info.has_validator_fn);
   EXPECT_EQ(&FLAGS_test_bool, info.flag_ptr);
+
+  FLAGS_test_abool = true;
+  r = GetCommandLineFlagInfo("test_abool", &info);
+  EXPECT_TRUE(r);
+  EXPECT_EQ("test_abool", info.name);
+  EXPECT_EQ("bool", info.type);
+  EXPECT_EQ("tests bool-ness", info.description);
+  EXPECT_EQ("true", info.current_value);
+  EXPECT_EQ("false", info.default_value);
+  EXPECT_FALSE(info.is_default);
+  EXPECT_FALSE(info.has_validator_fn);
+  EXPECT_EQ(&FLAGS_test_bool, info.flag_ptr);
+
+  FLAGS_test_bool = false;
+  r = GetCommandLineFlagInfo("test_abool", &info);
+  EXPECT_TRUE(r);
+  EXPECT_EQ("test_abool", info.name);
+  EXPECT_EQ("bool", info.type);
+  EXPECT_EQ("tests bool-ness", info.description);
+  EXPECT_EQ("false", info.current_value);
+  EXPECT_EQ("false", info.default_value);
+  EXPECT_FALSE(info.is_default);  // value is same, but flag *was* modified
+  EXPECT_FALSE(info.has_validator_fn);
+  EXPECT_EQ(&FLAGS_test_abool, info.flag_ptr);
 }
 
 TEST(GetCommandLineFlagInfoTest, FlagDoesNotExist) {
@@ -1569,4 +1669,3 @@ static int main(int argc, char **argv) {
 int main(int argc, char** argv) {
   return GFLAGS_NAMESPACE::main(argc, argv);
 }
-
