@@ -198,7 +198,13 @@ class FlagValue {
     FV_UINT64 = 4,
     FV_DOUBLE = 5,
     FV_STRING = 6,
-    FV_MAX_INDEX = 6,
+    FV_ABOOL = 7,
+    FV_AINT32 = 8,
+    FV_AUINT32 = 9,
+    FV_AINT64 = 10,
+    FV_AUINT64 = 11,
+    FV_ADOUBLE = 12,
+    FV_MAX_INDEX = 12,
   };
 
   template <typename FlagType>
@@ -256,6 +262,12 @@ DEFINE_FLAG_TRAITS(int64, FV_INT64);
 DEFINE_FLAG_TRAITS(uint64, FV_UINT64);
 DEFINE_FLAG_TRAITS(double, FV_DOUBLE);
 DEFINE_FLAG_TRAITS(std::string, FV_STRING);
+DEFINE_FLAG_TRAITS(std::atomic<bool>, FV_ABOOL);
+DEFINE_FLAG_TRAITS(std::atomic<int32>, FV_AINT32);
+DEFINE_FLAG_TRAITS(std::atomic<uint32>, FV_AUINT32);
+DEFINE_FLAG_TRAITS(std::atomic<int64>, FV_AINT64);
+DEFINE_FLAG_TRAITS(std::atomic<uint64>, FV_AUINT64);
+DEFINE_FLAG_TRAITS(std::atomic<double>, FV_ADOUBLE);
 
 #undef DEFINE_FLAG_TRAITS
 
@@ -286,6 +298,12 @@ FlagValue::~FlagValue() {
     case FV_UINT64: delete reinterpret_cast<uint64*>(value_buffer_); break;
     case FV_DOUBLE: delete reinterpret_cast<double*>(value_buffer_); break;
     case FV_STRING: delete reinterpret_cast<string*>(value_buffer_); break;
+    case FV_ABOOL: delete reinterpret_cast<std::atomic<bool>*>(value_buffer_); break;
+    case FV_AINT32: delete reinterpret_cast<std::atomic<int32>*>(value_buffer_); break;
+    case FV_AUINT32: delete reinterpret_cast<std::atomic<uint32>*>(value_buffer_); break;
+    case FV_AINT64: delete reinterpret_cast<std::atomic<int64>*>(value_buffer_); break;
+    case FV_AUINT64: delete reinterpret_cast<std::atomic<uint64>*>(value_buffer_); break;
+    case FV_ADOUBLE: delete reinterpret_cast<std::atomic<double>*>(value_buffer_); break;
   }
 }
 
