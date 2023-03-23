@@ -109,21 +109,23 @@ template <> struct CompileAssert<true> {};
 // compilation mode.  Therefore, it is safe to do things like:
 //    CHECK(fp->Write(x) == 4)
 // We allow stream-like objects after this for debugging, but they're ignored.
-#define EXPECT_TRUE(condition)                                  \
-  if (true) {                                                   \
-    if (!(condition)) {                                         \
-      fprintf(stderr, "Check failed: %s\n", #condition);        \
-      exit(1);                                                  \
-    }                                                           \
-  } else std::cerr << ""
+#define EXPECT_TRUE(condition)                                                      \
+  if (true) {                                                                       \
+    if (!(condition)) {                                                             \
+      fprintf(stderr, "%s:%d] Check failed: %s\n", __FILE__, __LINE__, #condition); \
+      exit(1);                                                                      \
+    }                                                                               \
+  } else                                                                            \
+    std::cerr << ""
 
-#define EXPECT_OP(op, val1, val2)                                       \
-  if (true) {                                                           \
-    if (!((val1) op (val2))) {                                          \
-      fprintf(stderr, "Check failed: %s %s %s\n", #val1, #op, #val2);   \
-      exit(1);                                                          \
-    }                                                                   \
-  } else std::cerr << ""
+#define EXPECT_OP(op, val1, val2)                                                                \
+  if (true) {                                                                                    \
+    if (!((val1)op(val2))) {                                                                     \
+      fprintf(stderr, "%s:%d] Check failed: %s %s %s\n", __FILE__, __LINE__, #val1, #op, #val2); \
+      exit(1);                                                                                   \
+    }                                                                                            \
+  } else                                                                                         \
+    std::cerr << ""
 
 #define EXPECT_EQ(val1, val2) EXPECT_OP(==, val1, val2)
 #define EXPECT_NE(val1, val2) EXPECT_OP(!=, val1, val2)

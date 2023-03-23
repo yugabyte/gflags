@@ -308,16 +308,24 @@ FlagValue::~FlagValue() {
 }
 
 bool FlagValue::ParseFrom(const char* value) {
-  if (type_ == FV_BOOL) {
+  if (type_ == FV_BOOL || type_ == FV_ABOOL) {
     const char* kTrue[] = { "1", "t", "true", "y", "yes" };
     const char* kFalse[] = { "0", "f", "false", "n", "no" };
     COMPILE_ASSERT(sizeof(kTrue) == sizeof(kFalse), true_false_equal);
     for (size_t i = 0; i < sizeof(kTrue)/sizeof(*kTrue); ++i) {
       if (strcasecmp(value, kTrue[i]) == 0) {
-        SET_VALUE_AS(bool, true);
+        if (type_ == FV_BOOL) {
+          SET_VALUE_AS(bool, true);
+        } else {
+          SET_VALUE_AS(atomic_bool, true);
+        }
         return true;
       } else if (strcasecmp(value, kFalse[i]) == 0) {
-        SET_VALUE_AS(bool, false);
+        if (type_ == FV_BOOL) {
+          SET_VALUE_AS(bool, false);
+        } else {
+          SET_VALUE_AS(atomic_bool, false);
+        }
         return true;
       }
     }
@@ -340,42 +348,70 @@ bool FlagValue::ParseFrom(const char* value) {
   errno = 0;
 
   switch (type_) {
-    case FV_INT32: {
+    case FV_INT32:
+    case FV_AINT32: {
       const int64 r = strto64(value, &end, base);
       if (errno || end != value + strlen(value))  return false;  // bad parse
       if (static_cast<int32>(r) != r)  // worked, but number out of range
         return false;
-      SET_VALUE_AS(int32, static_cast<int32>(r));
+      if (type_ == FV_INT32) {
+        SET_VALUE_AS(int32, static_cast<int32>(r));
+      } else {
+        SET_VALUE_AS(atomic_int32, static_cast<int32>(r));
+      }
       return true;
     }
-    case FV_UINT32: {
+    case FV_UINT32:
+    case FV_AUINT32: {
       while (*value == ' ') value++;
       if (*value == '-') return false;  // negative number
       const uint64 r = strtou64(value, &end, base);
-      if (errno || end != value + strlen(value))  return false;  // bad parse
-        if (static_cast<uint32>(r) != r)  // worked, but number out of range
+      if (errno || end != value + strlen(value)) return false;  // bad parse
+      if (static_cast<uint32>(r) != r)                          // worked, but number out of range
         return false;
+      if (type_ == FV_UINT32) {
       SET_VALUE_AS(uint32, static_cast<uint32>(r));
+      } else {
+      SET_VALUE_AS(atomic_uint32, static_cast<uint32>(r));
+      }
       return true;
     }
-    case FV_INT64: {
+    case FV_INT64:
+    case FV_AINT64: {
       const int64 r = strto64(value, &end, base);
       if (errno || end != value + strlen(value))  return false;  // bad parse
-      SET_VALUE_AS(int64, r);
+
+      if (type_ == FV_INT64) {
+        SET_VALUE_AS(int64, r);
+      } else {
+        SET_VALUE_AS(atomic_int64, r);
+      }
       return true;
     }
-    case FV_UINT64: {
+    case FV_UINT64:
+    case FV_AUINT64: {
       while (*value == ' ') value++;
       if (*value == '-') return false;  // negative number
       const uint64 r = strtou64(value, &end, base);
       if (errno || end != value + strlen(value))  return false;  // bad parse
-      SET_VALUE_AS(uint64, r);
+
+      if (type_ == FV_UINT64) {
+        SET_VALUE_AS(uint64, r);
+      } else {
+        SET_VALUE_AS(atomic_uint64, r);
+      }
       return true;
     }
-    case FV_DOUBLE: {
+    case FV_DOUBLE:
+    case FV_ADOUBLE: {
       const double r = strtod(value, &end);
       if (errno || end != value + strlen(value))  return false;  // bad parse
-      SET_VALUE_AS(double, r);
+
+      if (type_ == FV_DOUBLE) {
+        SET_VALUE_AS(double, r);
+      } else {
+        SET_VALUE_AS(atomic_double, r);
+      }
       return true;
     }
     default: {
@@ -407,6 +443,23 @@ string FlagValue::ToString() const {
       return intbuf;
     case FV_STRING:
       return VALUE_AS(string);
+    case FV_ABOOL:
+      return VALUE_AS(atomic_bool) ? "true" : "false";
+    case FV_AINT32:
+      snprintf(intbuf, sizeof(intbuf), "%" PRId32, (int32)VALUE_AS(atomic_int32));
+      return intbuf;
+    case FV_AUINT32:
+      snprintf(intbuf, sizeof(intbuf), "%" PRIu32, (uint32)VALUE_AS(atomic_uint32));
+      return intbuf;
+    case FV_AINT64:
+      snprintf(intbuf, sizeof(intbuf), "%" PRId64, (int64)VALUE_AS(atomic_int64));
+      return intbuf;
+    case FV_AUINT64:
+      snprintf(intbuf, sizeof(intbuf), "%" PRIu64, (uint64)VALUE_AS(atomic_uint64));
+      return intbuf;
+    case FV_ADOUBLE:
+      snprintf(intbuf, sizeof(intbuf), "%.17g", (double)VALUE_AS(atomic_double));
+      return intbuf;
     default:
       assert(false);
       return "";  // unknown type
@@ -497,6 +550,18 @@ bool FlagValue::Equal(const FlagValue& x) const {
     case FV_UINT64: return VALUE_AS(uint64) == OTHER_VALUE_AS(x, uint64);
     case FV_DOUBLE: return VALUE_AS(double) == OTHER_VALUE_AS(x, double);
     case FV_STRING: return VALUE_AS(string) == OTHER_VALUE_AS(x, string);
+    case FV_ABOOL:
+      return VALUE_AS(atomic_bool) == OTHER_VALUE_AS(x, atomic_bool);
+    case FV_AINT32:
+      return VALUE_AS(atomic_int32) == OTHER_VALUE_AS(x, atomic_int32);
+    case FV_AUINT32:
+      return VALUE_AS(atomic_uint32) == OTHER_VALUE_AS(x, atomic_uint32);
+    case FV_AINT64:
+      return VALUE_AS(atomic_int64) == OTHER_VALUE_AS(x, atomic_int64);
+    case FV_AUINT64:
+      return VALUE_AS(atomic_uint64) == OTHER_VALUE_AS(x, atomic_uint64);
+    case FV_ADOUBLE:
+      return VALUE_AS(atomic_double) == OTHER_VALUE_AS(x, atomic_double);
     default: assert(false); return false;  // unknown type
   }
 }
@@ -510,6 +575,18 @@ FlagValue* FlagValue::New() const {
     case FV_UINT64: return new FlagValue(new uint64(0), true);
     case FV_DOUBLE: return new FlagValue(new double(0.0), true);
     case FV_STRING: return new FlagValue(new string, true);
+    case FV_ABOOL:
+      return new FlagValue(new atomic_bool(false), true);
+    case FV_AINT32:
+      return new FlagValue(new atomic_int32(0), true);
+    case FV_AUINT32:
+      return new FlagValue(new atomic_uint32(0), true);
+    case FV_AINT64:
+      return new FlagValue(new atomic_int64(0), true);
+    case FV_AUINT64:
+      return new FlagValue(new atomic_uint64(0), true);
+    case FV_ADOUBLE:
+      return new FlagValue(new atomic_double(0.0), true);
     default: assert(false); return NULL;  // unknown type
   }
 }
@@ -524,6 +601,24 @@ void FlagValue::CopyFrom(const FlagValue& x) {
     case FV_UINT64: SET_VALUE_AS(uint64, OTHER_VALUE_AS(x, uint64));  break;
     case FV_DOUBLE: SET_VALUE_AS(double, OTHER_VALUE_AS(x, double));  break;
     case FV_STRING: SET_VALUE_AS(string, OTHER_VALUE_AS(x, string));  break;
+    case FV_ABOOL:
+      SET_VALUE_AS(atomic_bool, (bool)OTHER_VALUE_AS(x, atomic_bool));
+      break;
+    case FV_AINT32:
+      SET_VALUE_AS(atomic_int32, (int32)OTHER_VALUE_AS(x, atomic_int32));
+      break;
+    case FV_AUINT32:
+      SET_VALUE_AS(atomic_uint32, (uint32)OTHER_VALUE_AS(x, atomic_uint32));
+      break;
+    case FV_AINT64:
+      SET_VALUE_AS(atomic_int64, (int64)OTHER_VALUE_AS(x, atomic_int64));
+      break;
+    case FV_AUINT64:
+      SET_VALUE_AS(atomic_uint64, (uint64)OTHER_VALUE_AS(x, atomic_uint64));
+      break;
+    case FV_ADOUBLE:
+      SET_VALUE_AS(atomic_double, (double)OTHER_VALUE_AS(x, atomic_double));
+      break;
     default: assert(false);  // unknown type
   }
 }
@@ -841,7 +936,7 @@ CommandLineFlag* FlagRegistry::SplitArgumentLocked(const char* arg,
                                     kError, key->c_str());
       return NULL;
     }
-    if (flag->Type() != FlagValue::FV_BOOL) {
+    if (flag->Type() != FlagValue::FV_BOOL && flag->Type() != FlagValue::FV_ABOOL) {
       // 'x' exists but is not boolean, so we're not in the exception case.
       *error_message = StringPrintf(
           "%sboolean value (%s) specified for %s command line flag\n",
@@ -855,7 +950,7 @@ CommandLineFlag* FlagRegistry::SplitArgumentLocked(const char* arg,
   }
 
   // Assign a value if this is a boolean flag
-  if (*v == NULL && flag->Type() == FlagValue::FV_BOOL) {
+  if (*v == NULL && (flag->Type() == FlagValue::FV_BOOL || flag->Type() == FlagValue::FV_ABOOL)) {
     *v = "1";    // the --nox case was already handled, so this is the --x case
   }
 
@@ -1110,7 +1205,7 @@ uint32 CommandLineFlagParser::ParseNewCommandLineFlags(int* argc, char*** argv,
 
     if (value == NULL) {
       // Boolean options are always assigned a value by SplitArgumentLocked()
-      assert(flag->Type() != FlagValue::FV_BOOL);
+      assert(flag->Type() != FlagValue::FV_BOOL && flag->Type() != FlagValue::FV_ABOOL);
       if (i+1 >= first_nonopt) {
         // This flag needs a value, but there is nothing available
         error_flags_[key] = (string(kError) + "flag '" + (*argv)[i] + "'"
@@ -2015,7 +2110,6 @@ static uint32 ParseCommandLineFlagsInternal(int* argc, char*** argv,
 }
 
 uint32 ParseCommandLineFlags(int* argc, char*** argv, bool remove_flags) {
-  fprintf(stdout, "hk!! pcf\n\n"); fflush(stdout);
   return ParseCommandLineFlagsInternal(argc, argv, remove_flags, true);
 }
 

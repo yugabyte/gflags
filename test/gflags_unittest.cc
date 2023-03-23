@@ -284,7 +284,6 @@ void AssertIsType(Actual& x) {
 
 // Verify all the flags are the right type.
 TEST(FlagTypes, FlagTypes) {
-  fprintf(stdout, "hk!!\n\n"); fflush(stdout);
   AssertIsType<bool>(FLAGS_test_bool);
   AssertIsType<int32>(FLAGS_test_int32);
   AssertIsType<int64>(FLAGS_test_int64);
@@ -1083,7 +1082,7 @@ TEST(GetCommandLineFlagInfoTest, FlagExists) {
   r = GetCommandLineFlagInfo("test_aint32", &info);
   EXPECT_TRUE(r);
   EXPECT_EQ("test_aint32", info.name);
-  EXPECT_EQ("aint32", info.type);
+  EXPECT_EQ("int32", info.type);
   EXPECT_EQ("", info.description);
   EXPECT_EQ("-1", info.current_value);
   EXPECT_EQ("-1", info.default_value);
@@ -1125,9 +1124,9 @@ TEST(GetCommandLineFlagInfoTest, FlagExists) {
   EXPECT_EQ("false", info.default_value);
   EXPECT_FALSE(info.is_default);
   EXPECT_FALSE(info.has_validator_fn);
-  EXPECT_EQ(&FLAGS_test_bool, info.flag_ptr);
+  EXPECT_EQ(&FLAGS_test_abool, info.flag_ptr);
 
-  FLAGS_test_bool = false;
+  FLAGS_test_abool = false;
   r = GetCommandLineFlagInfo("test_abool", &info);
   EXPECT_TRUE(r);
   EXPECT_EQ("test_abool", info.name);
