@@ -1,8 +1,7 @@
 This repository contains a C++ implementation of the gflags library. The documentation is available online at https://gflags.github.io/gflags/.
 
-To build and test:
+To build and test use `./build_and_test.sh`
 
 ```sh
-rm -rf _build && mkdir _build && cmake -B _build 
-make -C _build && make test  -C _build
+Usage: ./build_and_test.sh [--clean] [--skip_test]
 ```
