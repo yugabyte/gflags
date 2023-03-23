@@ -40,7 +40,7 @@ if [ "$help" = true ]; then
 fi
 
 if [ "$clean" = true ]; then
-  echo -e "${BLUE}Cleanning...${NOCOLOR}"
+  echo -e "${BLUE}Cleaning...${NOCOLOR}"
   rm -rf _build
 fi
 
