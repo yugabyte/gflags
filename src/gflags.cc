@@ -147,6 +147,25 @@ void GFLAGS_DLL_DECL (*gflags_exitfunc)(int) = &exit;  // from stdlib.h
 // This is used by this file, and also in gflags_reporting.cc
 const char kStrippedFlagHelp[] = "\001\002\003\004 (unknown) \004\003\002\001";
 
+// template <typename AT, typename T>
+// void SetFlagValue(AVar<AT, T>* var, const T& value) {
+//   *var = value;
+// }
+
+// template void SetFlagValue<atomic_bool, bool>(AVar<atomic_bool, bool>* var, const bool& value);
+// template void SetFlagValue(AVar<int32>* var, const int32& value);
+// template void SetFlagValue(AVar<uint32>* var, const uint32& value);
+// template SetFlagValue<bool>(AVar<bool>* var, const bool& value);
+// template SetFlagValue<bool>(AVar<bool>* var, const bool& value);
+// template SetFlagValue<bool>(AVar<bool>* var, const bool& value);
+
+template <typename T>
+void SetFlagValue(T* var, const T& value) {
+  *var = value;
+}
+
+void SetFlagValue(std::string* var, const std::string& value) { *var = value; }
+
 namespace {
 
 // There are also 'reporting' flags, in gflags_reporting.cc.
@@ -276,7 +295,7 @@ DEFINE_FLAG_TRAITS(atomic_double, FV_ADOUBLE);
 // size of the .o.  Since there's no type-safety here anyway, macro is ok.
 #define VALUE_AS(type)  *reinterpret_cast<type*>(value_buffer_)
 #define OTHER_VALUE_AS(fv, type)  *reinterpret_cast<type*>(fv.value_buffer_)
-#define SET_VALUE_AS(type, value)  VALUE_AS(type) = (value)
+#define SET_VALUE_AS(type, value) SetFlagValue(reinterpret_cast<type*>(value_buffer_), (value))
 
 template <typename FlagType>
 FlagValue::FlagValue(FlagType* valbuf,

@@ -109,12 +109,30 @@ typedef unsigned __int64 uint64;
 #  error Do not know how to define a 32-bit integer quantity on your system
 #endif
 
-typedef std::atomic<bool> atomic_bool;
-typedef std::atomic<int32> atomic_int32;
-typedef std::atomic<uint32> atomic_uint32;
-typedef std::atomic<int64> atomic_int64;
-typedef std::atomic<uint64> atomic_uint64;
-typedef std::atomic<double> atomic_double;
+template <typename AT, typename T>
+class AVar : public AT {
+ public:
+  AVar() : AT() {}
+  AVar(const T& value) : AT(value) {}
+  operator T() const { return AT::load(std::memory_order_acquire); }
+
+ private:
+  friend void SetFlagValue(AVar<AT, T>* var, const T& value) {
+    var->store(value, std::memory_order_release);
+  }
+
+  T operator=(const T value) {
+    AT::store(value, std::memory_order_release);
+    return value;
+  }
+};
+
+typedef AVar<std::atomic<bool>, bool> atomic_bool;
+typedef AVar<std::atomic<int32>, int32> atomic_int32;
+typedef AVar<std::atomic<uint32>, uint32> atomic_uint32;
+typedef AVar<std::atomic<int64>, int64> atomic_int64;
+typedef AVar<std::atomic<uint64>, uint64> atomic_uint64;
+typedef AVar<std::atomic<double>, double> atomic_double;
 
 } // namespace GFLAGS_NAMESPACE
 
