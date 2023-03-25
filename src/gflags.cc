@@ -147,24 +147,10 @@ void GFLAGS_DLL_DECL (*gflags_exitfunc)(int) = &exit;  // from stdlib.h
 // This is used by this file, and also in gflags_reporting.cc
 const char kStrippedFlagHelp[] = "\001\002\003\004 (unknown) \004\003\002\001";
 
-// template <typename AT, typename T>
-// void SetFlagValue(AVar<AT, T>* var, const T& value) {
-//   *var = value;
-// }
-
-// template void SetFlagValue<atomic_bool, bool>(AVar<atomic_bool, bool>* var, const bool& value);
-// template void SetFlagValue(AVar<int32>* var, const int32& value);
-// template void SetFlagValue(AVar<uint32>* var, const uint32& value);
-// template SetFlagValue<bool>(AVar<bool>* var, const bool& value);
-// template SetFlagValue<bool>(AVar<bool>* var, const bool& value);
-// template SetFlagValue<bool>(AVar<bool>* var, const bool& value);
-
-template <typename T>
-void SetFlagValue(T* var, const T& value) {
+template <typename T1, typename T2>
+void SetFlagValue(T1* var, const T2& value) {
   *var = value;
 }
-
-void SetFlagValue(std::string* var, const std::string& value) { *var = value; }
 
 namespace {
 
@@ -223,7 +209,8 @@ class FlagValue {
     FV_AINT64 = 10,
     FV_AUINT64 = 11,
     FV_ADOUBLE = 12,
-    FV_MAX_INDEX = 12,
+    FV_ASTRING = 13,
+    FV_MAX_INDEX = 13,
   };
 
   template <typename FlagType>
@@ -287,6 +274,7 @@ DEFINE_FLAG_TRAITS(atomic_uint32, FV_AUINT32);
 DEFINE_FLAG_TRAITS(atomic_int64, FV_AINT64);
 DEFINE_FLAG_TRAITS(atomic_uint64, FV_AUINT64);
 DEFINE_FLAG_TRAITS(atomic_double, FV_ADOUBLE);
+DEFINE_FLAG_TRAITS(atomic_string, FV_ASTRING);
 
 #undef DEFINE_FLAG_TRAITS
 
@@ -323,6 +311,9 @@ FlagValue::~FlagValue() {
     case FV_AINT64: delete reinterpret_cast<atomic_int64*>(value_buffer_); break;
     case FV_AUINT64: delete reinterpret_cast<atomic_uint64*>(value_buffer_); break;
     case FV_ADOUBLE: delete reinterpret_cast<atomic_double*>(value_buffer_); break;
+    case FV_ASTRING:
+      delete reinterpret_cast<atomic_string*>(value_buffer_);
+      break;
   }
 }
 
@@ -352,6 +343,9 @@ bool FlagValue::ParseFrom(const char* value) {
 
   } else if (type_ == FV_STRING) {
     SET_VALUE_AS(string, value);
+    return true;
+  } else if (type_ == FV_ASTRING) {
+    SET_VALUE_AS(atomic_string, value);
     return true;
   }
 
@@ -479,6 +473,8 @@ string FlagValue::ToString() const {
     case FV_ADOUBLE:
       snprintf(intbuf, sizeof(intbuf), "%.17g", (double)VALUE_AS(atomic_double));
       return intbuf;
+    case FV_ASTRING:
+      return VALUE_AS(atomic_string);
     default:
       assert(false);
       return "";  // unknown type
@@ -527,6 +523,9 @@ bool FlagValue::Validate(const char* flagname,
     case FV_ADOUBLE:
       return reinterpret_cast<bool (*)(const char*, double)>(
           validate_fn_proto)(flagname, VALUE_AS(atomic_double));
+    case FV_ASTRING:
+      return reinterpret_cast<bool (*)(const char*, const string&)>(validate_fn_proto)(
+          flagname, VALUE_AS(atomic_string));
     default:
       assert(false);  // unknown type
       return false;
@@ -547,7 +546,8 @@ const char* FlagValue::TypeName() const {
       "uint32\0"
       "int64\0x"
       "uint64\0"
-      "double";
+      "double\0"
+      "string";
 
   if (type_ > FV_MAX_INDEX) {
     assert(false);
@@ -580,6 +580,8 @@ bool FlagValue::Equal(const FlagValue& x) const {
       return VALUE_AS(atomic_uint64) == OTHER_VALUE_AS(x, atomic_uint64);
     case FV_ADOUBLE:
       return VALUE_AS(atomic_double) == OTHER_VALUE_AS(x, atomic_double);
+    case FV_ASTRING:
+      return VALUE_AS(atomic_string) == OTHER_VALUE_AS(x, atomic_string);
     default: assert(false); return false;  // unknown type
   }
 }
@@ -605,6 +607,8 @@ FlagValue* FlagValue::New() const {
       return new FlagValue(new atomic_uint64(0), true);
     case FV_ADOUBLE:
       return new FlagValue(new atomic_double(0.0), true);
+    case FV_ASTRING:
+      return new FlagValue(new atomic_string, true);
     default: assert(false); return NULL;  // unknown type
   }
 }
@@ -636,6 +640,9 @@ void FlagValue::CopyFrom(const FlagValue& x) {
       break;
     case FV_ADOUBLE:
       SET_VALUE_AS(atomic_double, (double)OTHER_VALUE_AS(x, atomic_double));
+      break;
+    case FV_ASTRING:
+      SET_VALUE_AS(atomic_string, OTHER_VALUE_AS(x, atomic_string));
       break;
     default: assert(false);  // unknown type
   }
@@ -1620,6 +1627,7 @@ INSTANTIATE_FLAG_REGISTERER_CTOR(atomic_uint32);
 INSTANTIATE_FLAG_REGISTERER_CTOR(atomic_int64);
 INSTANTIATE_FLAG_REGISTERER_CTOR(atomic_uint64);
 INSTANTIATE_FLAG_REGISTERER_CTOR(atomic_double);
+INSTANTIATE_FLAG_REGISTERER_CTOR(atomic_string);
 
 #undef INSTANTIATE_FLAG_REGISTERER_CTOR
 

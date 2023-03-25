@@ -79,6 +79,7 @@
 // ---------------------------------------------------------------------------
 // Flag types
 #include <atomic>
+#include <shared_mutex>
 #include <string>
 #if @HAVE_STDINT_H@
 #  include <stdint.h>                   // the normal place uint32_t is defined
@@ -110,14 +111,14 @@ typedef unsigned __int64 uint64;
 #endif
 
 template <typename AT, typename T>
-class AVar : public AT {
+class AtomicType : public AT {
  public:
-  AVar() : AT() {}
-  AVar(const T& value) : AT(value) {}
+  AtomicType() : AT() {}
+  AtomicType(const T& value) : AT(value) {}
   operator T() const { return AT::load(std::memory_order_acquire); }
 
  private:
-  friend void SetFlagValue(AVar<AT, T>* var, const T& value) {
+  friend void SetFlagValue(AtomicType<AT, T>* var, const T& value) {
     var->store(value, std::memory_order_release);
   }
 
@@ -127,12 +128,83 @@ class AVar : public AT {
   }
 };
 
-typedef AVar<std::atomic<bool>, bool> atomic_bool;
-typedef AVar<std::atomic<int32>, int32> atomic_int32;
-typedef AVar<std::atomic<uint32>, uint32> atomic_uint32;
-typedef AVar<std::atomic<int64>, int64> atomic_int64;
-typedef AVar<std::atomic<uint64>, uint64> atomic_uint64;
-typedef AVar<std::atomic<double>, double> atomic_double;
+class AtomicString {
+ public:
+  AtomicString() : value_() {}
+  AtomicString(const std::string& value) : value_(value) {}
+  AtomicString(const AtomicString& value) : value_(value) {}
+  operator std::string() const {
+    std::shared_lock l(mutex_);
+    return value_;
+  }
+
+  bool operator==(const std::string& value) const {
+    std::shared_lock l(mutex_);
+    return value_ == value;
+  }
+
+  bool operator==(const AtomicString& rhs) const {
+    std::shared_lock l(mutex_);
+    return value_ == (std::string)(rhs);
+  }
+
+  bool operator==(const char* rhs) const {
+    std::shared_lock l(mutex_);
+    return value_ == rhs;
+  }
+
+ private:
+  friend void SetFlagValue(AtomicString* var, const char* value) { *var = value; }
+  friend void SetFlagValue(AtomicString* var, const std::string& value) { *var = value; }
+  friend void SetFlagValue(AtomicString* var, const AtomicString& value) { *var = value; }
+
+  const std::string& operator=(const std::string& value) {
+    std::lock_guard l(mutex_);
+    value_ = value;
+    return value;
+  }
+
+  const std::string& operator=(std::string&& value) {
+    std::lock_guard l(mutex_);
+    value_ = value;
+    return value;
+  }
+
+  const char* operator=(const char* value) {
+    std::lock_guard l(mutex_);
+    value_ = value;
+    return value;
+  }
+
+  const char* operator=(char*&& value) {
+    std::lock_guard l(mutex_);
+    value_ = value;
+    return value;
+  }
+
+  const AtomicString& operator=(const AtomicString& rhs) {
+    std::lock_guard l(mutex_);
+    value_ = (std::string)rhs;
+    return rhs;
+  }
+
+  const AtomicString& operator=(AtomicString&& rhs) {
+    std::lock_guard l(mutex_);
+    value_ = (std::string)rhs;
+    return rhs;
+  }
+
+  mutable std::shared_mutex mutex_;
+  std::string value_;
+};
+
+typedef AtomicType<std::atomic<bool>, bool> atomic_bool;
+typedef AtomicType<std::atomic<int32>, int32> atomic_int32;
+typedef AtomicType<std::atomic<uint32>, uint32> atomic_uint32;
+typedef AtomicType<std::atomic<int64>, int64> atomic_int64;
+typedef AtomicType<std::atomic<uint64>, uint64> atomic_uint64;
+typedef AtomicType<std::atomic<double>, double> atomic_double;
+typedef AtomicString atomic_string;
 
 } // namespace GFLAGS_NAMESPACE
 
