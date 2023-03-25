@@ -530,7 +530,6 @@ const char* FlagValue::TypeName() const {
       "uint64\0"
       "double";
 
-  fprintf(stdout, "Running the unit tests now...\n\n"); fflush(stdout);
   if (type_ > FV_MAX_INDEX) {
     assert(false);
     return "";
