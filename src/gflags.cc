@@ -2090,6 +2090,34 @@ bool RegisterFlagValidator(const string* flag,
   return AddFlagValidator(flag, reinterpret_cast<ValidateFnProto>(validate_fn));
 }
 
+bool RegisterFlagValidator(const atomic_bool* flag,
+                           bool (*validate_fn)(const char*, bool)) {
+  return AddFlagValidator(flag, reinterpret_cast<ValidateFnProto>(validate_fn));
+}
+bool RegisterFlagValidator(const atomic_int32* flag,
+                           bool (*validate_fn)(const char*, int32)) {
+  return AddFlagValidator(flag, reinterpret_cast<ValidateFnProto>(validate_fn));
+}
+bool RegisterFlagValidator(const atomic_uint32* flag,
+                           bool (*validate_fn)(const char*, uint32)) {
+  return AddFlagValidator(flag, reinterpret_cast<ValidateFnProto>(validate_fn));
+}
+bool RegisterFlagValidator(const atomic_int64* flag,
+                           bool (*validate_fn)(const char*, int64)) {
+  return AddFlagValidator(flag, reinterpret_cast<ValidateFnProto>(validate_fn));
+}
+bool RegisterFlagValidator(const atomic_uint64* flag,
+                           bool (*validate_fn)(const char*, uint64)) {
+  return AddFlagValidator(flag, reinterpret_cast<ValidateFnProto>(validate_fn));
+}
+bool RegisterFlagValidator(const atomic_double* flag,
+                           bool (*validate_fn)(const char*, double)) {
+  return AddFlagValidator(flag, reinterpret_cast<ValidateFnProto>(validate_fn));
+}
+bool RegisterFlagValidator(const atomic_string* flag,
+                           bool (*validate_fn)(const char*, const string&)) {
+  return AddFlagValidator(flag, reinterpret_cast<ValidateFnProto>(validate_fn));
+}
 
 // --------------------------------------------------------------------
 // ParseCommandLineFlags()

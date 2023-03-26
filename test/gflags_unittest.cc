@@ -89,6 +89,11 @@ DEFINE_ATOMIC_uint64(test_atomic_uint64, 2, "");
 DEFINE_ATOMIC_double(test_atomic_double, -1.0, "");
 DEFINE_ATOMIC_string(test_atomic_string, "initial", "");
 
+static bool ValidateAtomicBool(const char* flag, bool value) { return true; }
+DEFINE_validator(test_atomic_bool, ValidateAtomicBool);
+static bool ValidateAtomicString(const char* flag, const string& value) { return true; }
+DEFINE_validator(test_atomic_string, ValidateAtomicString);
+
 //
 // The below ugliness gets some additional code coverage in the -helpxml
 // and -helpmatch test cases having to do with string lengths and formatting
@@ -1571,7 +1576,7 @@ TEST(FlagsValidatorDeathTest, InvalidFlagNeverSet) {
 
 TEST(FlagsValidator, InvalidFlagPtr) {
   int32 dummy;
-  EXPECT_FALSE(RegisterFlagValidator(NULL, &ValidateTestFlagIs5));
+  EXPECT_FALSE(RegisterFlagValidator((int32*)NULL, &ValidateTestFlagIs5));
   EXPECT_FALSE(RegisterFlagValidator(&dummy, &ValidateTestFlagIs5));
 }
 

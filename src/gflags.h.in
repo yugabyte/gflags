@@ -133,6 +133,21 @@ extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const int64*       flag, bool 
 extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const uint64*      flag, bool (*validate_fn)(const char*, uint64));
 extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const double*      flag, bool (*validate_fn)(const char*, double));
 extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const std::string* flag, bool (*validate_fn)(const char*, const std::string&));
+extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const atomic_bool* flag,
+                                                  bool (*validate_fn)(const char*, bool));
+extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const atomic_int32* flag,
+                                                  bool (*validate_fn)(const char*, int32));
+extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const atomic_uint32* flag,
+                                                  bool (*validate_fn)(const char*, uint32));
+extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const atomic_int64* flag,
+                                                  bool (*validate_fn)(const char*, int64));
+extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const atomic_uint64* flag,
+                                                  bool (*validate_fn)(const char*, uint64));
+extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const atomic_double* flag,
+                                                  bool (*validate_fn)(const char*, double));
+extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const atomic_string* flag,
+                                                  bool (*validate_fn)(const char*,
+                                                                      const std::string&));
 
 // Convenience macro for the registration of a flag validator
 #define DEFINE_validator(name, validator) \
