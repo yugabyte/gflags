@@ -676,6 +676,7 @@ TEST(SetFlagValueTest, IllegalValues) {
   EXPECT_EQ("", SetCommandLineOption("test_atomic_uint32", ""));
   EXPECT_EQ("", SetCommandLineOption("test_atomic_uint64", ""));
   EXPECT_EQ("", SetCommandLineOption("test_atomic_double", ""));
+  EXPECT_EQ("test_atomic_string set to \n", SetCommandLineOption("test_atomic_string", ""));
 
   EXPECT_TRUE(FLAGS_test_bool);
   EXPECT_EQ(119, FLAGS_test_int32);
@@ -1634,9 +1635,9 @@ static int main(int argc, char **argv) {
   // We need to call SetArgv before parsing flags, so our "test" argv will
   // win out over this executable's real argv.  That makes running this
   // test with a real --help flag kinda annoying, unfortunately.
-  const char* test_atomic_rgv[] = {"/test/argv/for/gflags_unittest", "argv 2", "3rd argv",
-                                   "argv #4"};
-  SetArgv(arraysize(test_atomic_rgv), test_atomic_rgv);
+  const char* test_argv[] = { "/test/argv/for/gflags_unittest",
+                              "argv 2", "3rd argv", "argv #4" };
+  SetArgv(arraysize(test_argv), test_argv);
 
   // The first arg is the usage message, also important for testing.
   string usage_message = (string(GetArgv0()) +

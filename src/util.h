@@ -115,8 +115,7 @@ template <> struct CompileAssert<true> {};
       fprintf(stderr, "%s:%d] Check failed: %s\n", __FILE__, __LINE__, #condition); \
       exit(1);                                                                      \
     }                                                                               \
-  } else                                                                            \
-    std::cerr << ""
+  } else std::cerr << ""
 
 #define EXPECT_OP(op, val1, val2)                                                                \
   if (true) {                                                                                    \
@@ -124,8 +123,7 @@ template <> struct CompileAssert<true> {};
       fprintf(stderr, "%s:%d] Check failed: %s %s %s\n", __FILE__, __LINE__, #val1, #op, #val2); \
       exit(1);                                                                                   \
     }                                                                                            \
-  } else                                                                                         \
-    std::cerr << ""
+  } else std::cerr << ""
 
 #define EXPECT_EQ(val1, val2) EXPECT_OP(==, val1, val2)
 #define EXPECT_NE(val1, val2) EXPECT_OP(!=, val1, val2)

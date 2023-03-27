@@ -606,15 +606,16 @@ inline AtomicString* dont_pass0toDEFINE_ATOMIC_string(char* stringspot, int valu
 // The destructor MUST be an inline function such that the explicit
 // destruction occurs in the same compilation unit as the placement new.
 class StringFlagDestructor {
-  void* current_storage_;
-  void* defvalue_storage_;
+  void *current_storage_;
+  void *defvalue_storage_;
 
- public:
-  StringFlagDestructor(void* current, void* defvalue)
-      : current_storage_(current), defvalue_storage_(defvalue) {}
+public:
+
+  StringFlagDestructor(void *current, void *defvalue)
+  : current_storage_(current), defvalue_storage_(defvalue) {}
 
   ~StringFlagDestructor() {
-    reinterpret_cast<clstring*>(current_storage_)->~clstring();
+    reinterpret_cast<clstring*>(current_storage_ )->~clstring();
     reinterpret_cast<clstring*>(defvalue_storage_)->~clstring();
   }
 };
@@ -641,23 +642,29 @@ class AtomicStringFlagDestructor {
 // The weird 'using' + 'extern' inside the fLS namespace is to work around
 // an unknown compiler bug/issue with the gcc 4.2.1 on SUSE 10.  See
 //    http://code.google.com/p/google-gflags/issues/detail?id=20
-#define DEFINE_string(name, val, txt)                                                             \
-  namespace fLS {                                                                                 \
-  using ::fLS::clstring;                                                                          \
-  using ::fLS::StringFlagDestructor;                                                              \
-  static union {                                                                                  \
-    void* align;                                                                                  \
-    char s[sizeof(clstring)];                                                                     \
-  } s_##name[2];                                                                                  \
-  clstring* const FLAGS_no##name = ::fLS::dont_pass0toDEFINE_string(s_##name[0].s, val);          \
-  static GFLAGS_NAMESPACE::FlagRegisterer o_##name(#name, MAYBE_STRIPPED_HELP(txt), __FILE__,     \
-                                                   FLAGS_no##name,                                \
-                                                   new(s_##name[1].s) clstring(*FLAGS_no##name)); \
-  static StringFlagDestructor d_##name(s_##name[0].s, s_##name[1].s);                             \
-  extern GFLAGS_DLL_DEFINE_FLAG clstring& FLAGS_##name;                                           \
-  using fLS::FLAGS_##name;                                                                        \
-  clstring& FLAGS_##name = *FLAGS_no##name;                                                       \
-  }                                                                                               \
+// We need to define a var named FLAGS_no##name so people don't define
+// --string and --nostring.  And we need a temporary place to put val
+// so we don't have to evaluate it twice.  Two great needs that go
+// great together!
+// The weird 'using' + 'extern' inside the fLS namespace is to work around
+// an unknown compiler bug/issue with the gcc 4.2.1 on SUSE 10.  See
+//    http://code.google.com/p/google-gflags/issues/detail?id=20
+#define DEFINE_string(name, val, txt)                                       \
+  namespace fLS {                                                           \
+    using ::fLS::clstring;                                                  \
+    using ::fLS::StringFlagDestructor;                                      \
+    static union { void* align; char s[sizeof(clstring)]; } s_##name[2];    \
+    clstring* const FLAGS_no##name = ::fLS::                                \
+                                   dont_pass0toDEFINE_string(s_##name[0].s, \
+                                                             val);          \
+    static GFLAGS_NAMESPACE::FlagRegisterer o_##name(                       \
+        #name, MAYBE_STRIPPED_HELP(txt), __FILE__,                          \
+        FLAGS_no##name, new (s_##name[1].s) clstring(*FLAGS_no##name));     \
+    static StringFlagDestructor d_##name(s_##name[0].s, s_##name[1].s);     \
+    extern GFLAGS_DLL_DEFINE_FLAG clstring& FLAGS_##name;                   \
+    using fLS::FLAGS_##name;                                                \
+    clstring& FLAGS_##name = *FLAGS_no##name;                               \
+  }                                                                         \
   using fLS::FLAGS_##name
 
 #define DEFINE_ATOMIC_VARIABLE(type, atomic_type, shorttype, name, value, help)                  \
@@ -699,24 +706,25 @@ class AtomicStringFlagDestructor {
 
 #define DEFINE_ATOMIC_string(name, val, txt)                                                  \
   namespace fLS {                                                                             \
-  using ::GFLAGS_NAMESPACE::AtomicString;                                                     \
+  using ::GFLAGS_NAMESPACE::atomic_string;                                                     \
   using ::fLS::AtomicStringFlagDestructor;                                                    \
   static union {                                                                              \
     void* align;                                                                              \
-    char s[sizeof(AtomicString)];                                                             \
+    char s[sizeof(atomic_string)];                                                             \
   } s_##name[2];                                                                              \
-  AtomicString* const FLAGS_no##name =                                                        \
+  atomic_string* const FLAGS_no##name =                                                        \
       ::fLS::dont_pass0toDEFINE_ATOMIC_string(s_##name[0].s, val);                            \
   static GFLAGS_NAMESPACE::FlagRegisterer o_##name(#name, MAYBE_STRIPPED_HELP(txt), __FILE__, \
                                                    FLAGS_no##name,                            \
                                                    new(s_##name[1].s)                         \
-                                                       AtomicString(*FLAGS_no##name));        \
+                                                       atomic_string(*FLAGS_no##name));        \
   static AtomicStringFlagDestructor d_##name(s_##name[0].s, s_##name[1].s);                   \
-  extern GFLAGS_DLL_DEFINE_FLAG AtomicString& FLAGS_##name;                                   \
+  extern GFLAGS_DLL_DEFINE_FLAG atomic_string& FLAGS_##name;                                   \
   using fLS::FLAGS_##name;                                                                    \
-  AtomicString& FLAGS_##name = *FLAGS_no##name;                                               \
+  atomic_string& FLAGS_##name = *FLAGS_no##name;                                               \
   }                                                                                           \
   using fLS::FLAGS_##name
+
 #endif  // SWIG
 
 
