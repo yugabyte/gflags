@@ -676,6 +676,8 @@ class FlagRegistry {
   bool SetFlagLocked(CommandLineFlag* flag, const char* value,
                      FlagSettingMode set_mode, string* msg);
 
+  bool ValidateValueLocked(CommandLineFlag* flag, const char* value, string* err_msg) const;
+
   static FlagRegistry* GlobalRegistry();   // returns a singleton registry
 
  private:
@@ -894,6 +896,19 @@ bool FlagRegistry::SetFlagLocked(CommandLineFlag* flag,
   }
 
   return true;
+}
+
+bool FlagRegistry::ValidateValueLocked(CommandLineFlag* flag, const char* value,
+                                       string* err_msg) const {
+  FlagValue* dummy_value = flag->current_->New();
+  bool result = TryParseLocked(flag, dummy_value, value, err_msg);
+  delete dummy_value;
+
+  if (result) {
+    // On success clear the error message.
+    *err_msg = "";
+  }
+  return result;
 }
 
 // Get the singleton FlagRegistry object
@@ -1655,6 +1670,24 @@ string SetCommandLineOptionWithMode(const char* name, const char* value,
 
 string SetCommandLineOption(const char* name, const char* value) {
   return SetCommandLineOptionWithMode(name, value, SET_FLAGS_VALUE);
+}
+
+// --------------------------------------------------------------------
+// ValidateCommandLineOption()
+//    Check if we can set a flag to a particular value. If this check
+//    passes then the flag can be successfuly set to this value using
+//    SetCommandLineOption.
+// --------------------------------------------------------------------
+bool ValidateCommandLineOption(const char* flagname, const char* value, string* err_msg) {
+  FlagRegistry* const registry = FlagRegistry::GlobalRegistry();
+  FlagRegistryLock frl(registry);
+  CommandLineFlag* flag = registry->FindFlagLocked(flagname);
+  if (!flag) {
+    *err_msg = StringPrintf("Unknown command line flag '%s'", flagname);
+    return false;
+  }
+
+  return registry->ValidateValueLocked(flag, value, err_msg);
 }
 
 // --------------------------------------------------------------------

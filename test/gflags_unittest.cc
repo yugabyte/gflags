@@ -157,6 +157,8 @@ DEFINE_bool(deadlock_if_cant_lock,
             "if locking of registry in validators fails.");
 DEFINE_validator(deadlock_if_cant_lock, DeadlockIfCantLockInValidators);
 
+DEFINE_string(test_filter, "", "Run a single test. Format <TestClass>/<TestCase>");
+
 #define MAKEFLAG(x) DEFINE_int32(test_flag_num##x, x, "Test flag")
 
 // Define 10 flags
@@ -1519,6 +1521,48 @@ TEST(FlagsValidator, FlagSaver) {
 }
 
 
+TEST(ValidateFlagValueTest, BaseTest) {
+  // Valid values
+  {
+    string err_msg;
+    EXPECT_TRUE(ValidateCommandLineOption("test_str1", "second", &err_msg));
+    EXPECT_EQ("", err_msg);
+  }
+  {
+    string err_msg;
+    EXPECT_TRUE(ValidateCommandLineOption("test_str2", "third", &err_msg));
+    EXPECT_EQ("", err_msg);
+  }
+
+  // Bad values
+  {
+    string err_msg;
+    EXPECT_FALSE(ValidateCommandLineOption("test_double", "0.1xxx", &err_msg));
+    EXPECT_NE(string::npos, err_msg.find("illegal value '0.1xxx'"));
+  }
+  {
+    string err_msg;
+    EXPECT_FALSE(ValidateCommandLineOption("test_double", "", &err_msg));
+    EXPECT_NE(string::npos, err_msg.find("illegal value ''"));
+  }
+  // Flags with validators
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs5));
+  {
+    string err_msg;
+    EXPECT_FALSE(ValidateCommandLineOption("test_flag", "1", &err_msg));
+    EXPECT_NE(string::npos, err_msg.find("failed validation of new value '1'"));
+  }
+  {
+    string err_msg;
+    EXPECT_TRUE(ValidateCommandLineOption("test_flag", "5", &err_msg));
+    EXPECT_EQ("", err_msg);
+  }
+
+  // Undo the flag validator setting
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, NULL));
+}
+
+
 }  // unnamed namespace
 
 static int main(int argc, char **argv) {
@@ -1556,7 +1600,7 @@ static int main(int argc, char **argv) {
   MakeTmpdir(&FLAGS_test_tmpdir);
 
   int exit_status = 0;
-  if (run_tests) {
+  if (run_tests || !FLAGS_test_filter.empty()) {
 	  fprintf(stdout, "Running the unit tests now...\n\n"); fflush(stdout);
 	  exit_status = RUN_ALL_TESTS();
   } else fprintf(stderr, "\n\nPASS\n");
@@ -1569,4 +1613,3 @@ static int main(int argc, char **argv) {
 int main(int argc, char** argv) {
   return GFLAGS_NAMESPACE::main(argc, argv);
 }
-
