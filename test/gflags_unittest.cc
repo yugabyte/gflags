@@ -1613,3 +1613,4 @@ static int main(int argc, char **argv) {
 int main(int argc, char** argv) {
   return GFLAGS_NAMESPACE::main(argc, argv);
 }
+
