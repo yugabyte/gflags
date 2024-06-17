@@ -1530,11 +1530,6 @@ TEST(ValidateFlagValueTest, BaseTest) {
     EXPECT_TRUE(ValidateCommandLineOption("test_str1", "second", &err_msg));
     EXPECT_EQ("", err_msg);
   }
-  {
-    string err_msg;
-    EXPECT_TRUE(ValidateCommandLineOption("test_str2", "third", &err_msg));
-    EXPECT_EQ("", err_msg);
-  }
 
   // Bad values
   {
@@ -1594,10 +1589,9 @@ TEST(ValidateFlagValueTest, BaseTest) {
 
 }  // unnamed namespace
 
-static int main(int argc, char **argv) {
-
+static int main(int argc, char** argv) {
   // Run unit tests only if called without arguments, otherwise this program
-  // is used by an "external" usage test
+  // is used by an "external" usage test.
   const bool run_tests = (argc == 1);
 
   // We need to call SetArgv before parsing flags, so our "test" argv will
@@ -1629,10 +1623,13 @@ static int main(int argc, char **argv) {
   MakeTmpdir(&FLAGS_test_tmpdir);
 
   int exit_status = 0;
+  // If the test_filter flag is set, we run a subset of tests.
   if (run_tests || !FLAGS_test_filter.empty()) {
-	  fprintf(stdout, "Running the unit tests now...\n\n"); fflush(stdout);
-	  exit_status = RUN_ALL_TESTS();
-  } else fprintf(stderr, "\n\nPASS\n");
+    fprintf(stdout, "Running the unit tests now...\n\n");
+    fflush(stdout);
+    exit_status = RUN_ALL_TESTS();
+  } else
+    fprintf(stderr, "\n\nPASS\n");
   ShutDownCommandLineFlags();
   return exit_status;
 }

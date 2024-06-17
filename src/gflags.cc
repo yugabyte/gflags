@@ -905,7 +905,7 @@ bool FlagRegistry::ValidateValueLocked(CommandLineFlag* flag, const char* value,
   delete dummy_value;
 
   if (result) {
-    // On success clear the error message.
+    // On success clear the message which says '<flag> set to <value>'.
     *err_msg = "";
   }
   return result;
