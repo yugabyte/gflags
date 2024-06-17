@@ -194,21 +194,22 @@ template <> struct CompileAssert<true> {};
   }
 
 // Note that this macro uses a FlagSaver to keep tests isolated.
-#define TEST(a, b)                                                                                 \
-  struct Test_##a##_##b {                                                                          \
-    Test_##a##_##b() { g_testlist.push_back(&Run); }                                               \
-    static bool Run() {                                                                            \
-      if (!FLAGS_test_filter.empty() && strcasecmp(FLAGS_test_filter.c_str(), (#a "/" #b)) != 0) { \
-        return false;                                                                              \
-      }                                                                                            \
-      FlagSaver fs;                                                                                \
-      fprintf(stderr, "Running test %s/%s\n", #a, #b);                                             \
-      RunTest();                                                                                   \
-      return true;                                                                                 \
-    }                                                                                              \
-    static void RunTest();                                                                         \
-  };                                                                                               \
-  static Test_##a##_##b g_test_##a##_##b;                                                          \
+#define TEST(a, b)                                                                        \
+  struct Test_##a##_##b {                                                                 \
+    Test_##a##_##b() { g_testlist.push_back(&Run); }                                      \
+    static bool Run() {                                                                   \
+      if (!FLAGS_test_filter.empty() && strcasecmp(FLAGS_test_filter.c_str(), #a) != 0 && \
+          strcasecmp(FLAGS_test_filter.c_str(), (#a "/" #b)) != 0) {                      \
+        return false;                                                                     \
+      }                                                                                   \
+      FlagSaver fs;                                                                       \
+      fprintf(stderr, "Running test %s/%s\n", #a, #b);                                    \
+      RunTest();                                                                          \
+      return true;                                                                        \
+    }                                                                                     \
+    static void RunTest();                                                                \
+  };                                                                                      \
+  static Test_##a##_##b g_test_##a##_##b;                                                 \
   void Test_##a##_##b::RunTest()
 
 // This is a dummy class that eases the google->opensource transition.

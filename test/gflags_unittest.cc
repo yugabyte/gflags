@@ -157,7 +157,7 @@ DEFINE_bool(deadlock_if_cant_lock,
             "if locking of registry in validators fails.");
 DEFINE_validator(deadlock_if_cant_lock, DeadlockIfCantLockInValidators);
 
-DEFINE_string(test_filter, "", "Run a single test. Format <TestClass>/<TestCase>");
+DEFINE_string(test_filter, "", "Run a single test. Format <TestClass>[/<TestCase>]");
 
 #define MAKEFLAG(x) DEFINE_int32(test_flag_num##x, x, "Test flag")
 
@@ -1613,4 +1613,3 @@ static int main(int argc, char **argv) {
 int main(int argc, char** argv) {
   return GFLAGS_NAMESPACE::main(argc, argv);
 }
-
