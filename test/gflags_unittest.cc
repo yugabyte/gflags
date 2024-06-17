@@ -1522,6 +1522,8 @@ TEST(FlagsValidator, FlagSaver) {
 
 
 TEST(ValidateFlagValueTest, BaseTest) {
+  EXPECT_EQ("initial", FLAGS_test_str1);
+
   // Valid values
   {
     string err_msg;
@@ -1558,8 +1560,35 @@ TEST(ValidateFlagValueTest, BaseTest) {
     EXPECT_EQ("", err_msg);
   }
 
-  // Undo the flag validator setting
+  // Undo the flag validator
   EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, NULL));
+
+  // Make sure none of the flags changed due to the validations
+  CommandLineFlagInfo info;
+
+  EXPECT_EQ("initial", FLAGS_test_str1);
+  info = GetCommandLineFlagInfoOrDie("test_str1");
+  EXPECT_EQ("initial", info.current_value);
+  EXPECT_EQ("initial", info.default_value);
+  EXPECT_TRUE(info.is_default);
+
+  EXPECT_EQ("initial", FLAGS_test_str2);
+  info = GetCommandLineFlagInfoOrDie("test_str2");
+  EXPECT_EQ("initial", info.current_value);
+  EXPECT_EQ("initial", info.default_value);
+  EXPECT_TRUE(info.is_default);
+
+  EXPECT_DOUBLE_EQ(-1, FLAGS_test_double);
+  info = GetCommandLineFlagInfoOrDie("test_double");
+  EXPECT_EQ("-1", info.current_value);
+  EXPECT_EQ("-1", info.default_value);
+  EXPECT_TRUE(info.is_default);
+
+  EXPECT_EQ(-1, FLAGS_test_flag);
+  info = GetCommandLineFlagInfoOrDie("test_flag");
+  EXPECT_EQ("-1", info.current_value);
+  EXPECT_EQ("-1", info.default_value);
+  EXPECT_TRUE(info.is_default);
 }
 
 
