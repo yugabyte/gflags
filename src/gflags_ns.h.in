@@ -70,6 +70,7 @@ using GFLAGS_NAMESPACE::SET_FLAG_IF_DEFAULT;
 using GFLAGS_NAMESPACE::SET_FLAGS_DEFAULT;
 using GFLAGS_NAMESPACE::SetCommandLineOption;
 using GFLAGS_NAMESPACE::SetCommandLineOptionWithMode;
+using GFLAGS_NAMESPACE::ValidateCommandLineOption;
 using GFLAGS_NAMESPACE::FlagSaver;
 using GFLAGS_NAMESPACE::CommandlineFlagsIntoString;
 using GFLAGS_NAMESPACE::ReadFlagsFromString;

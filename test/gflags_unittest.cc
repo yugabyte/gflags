@@ -157,6 +157,8 @@ DEFINE_bool(deadlock_if_cant_lock,
             "if locking of registry in validators fails.");
 DEFINE_validator(deadlock_if_cant_lock, DeadlockIfCantLockInValidators);
 
+DEFINE_string(test_filter, "", "Run a single test. Format <TestClass>[/<TestCase>]");
+
 #define MAKEFLAG(x) DEFINE_int32(test_flag_num##x, x, "Test flag")
 
 // Define 10 flags
@@ -1519,12 +1521,77 @@ TEST(FlagsValidator, FlagSaver) {
 }
 
 
+TEST(ValidateFlagValueTest, BaseTest) {
+  EXPECT_EQ("initial", FLAGS_test_str1);
+
+  // Valid values
+  {
+    string err_msg;
+    EXPECT_TRUE(ValidateCommandLineOption("test_str1", "second", &err_msg));
+    EXPECT_EQ("", err_msg);
+  }
+
+  // Bad values
+  {
+    string err_msg;
+    EXPECT_FALSE(ValidateCommandLineOption("test_double", "0.1xxx", &err_msg));
+    EXPECT_NE(string::npos, err_msg.find("illegal value '0.1xxx'"));
+  }
+  {
+    string err_msg;
+    EXPECT_FALSE(ValidateCommandLineOption("test_double", "", &err_msg));
+    EXPECT_NE(string::npos, err_msg.find("illegal value ''"));
+  }
+  // Flags with validators
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs5));
+  {
+    string err_msg;
+    EXPECT_FALSE(ValidateCommandLineOption("test_flag", "1", &err_msg));
+    EXPECT_NE(string::npos, err_msg.find("failed validation of new value '1'"));
+  }
+  {
+    string err_msg;
+    EXPECT_TRUE(ValidateCommandLineOption("test_flag", "5", &err_msg));
+    EXPECT_EQ("", err_msg);
+  }
+
+  // Undo the flag validator
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, NULL));
+
+  // Make sure none of the flags changed due to the validations
+  CommandLineFlagInfo info;
+
+  EXPECT_EQ("initial", FLAGS_test_str1);
+  info = GetCommandLineFlagInfoOrDie("test_str1");
+  EXPECT_EQ("initial", info.current_value);
+  EXPECT_EQ("initial", info.default_value);
+  EXPECT_TRUE(info.is_default);
+
+  EXPECT_EQ("initial", FLAGS_test_str2);
+  info = GetCommandLineFlagInfoOrDie("test_str2");
+  EXPECT_EQ("initial", info.current_value);
+  EXPECT_EQ("initial", info.default_value);
+  EXPECT_TRUE(info.is_default);
+
+  EXPECT_DOUBLE_EQ(-1, FLAGS_test_double);
+  info = GetCommandLineFlagInfoOrDie("test_double");
+  EXPECT_EQ("-1", info.current_value);
+  EXPECT_EQ("-1", info.default_value);
+  EXPECT_TRUE(info.is_default);
+
+  EXPECT_EQ(-1, FLAGS_test_flag);
+  info = GetCommandLineFlagInfoOrDie("test_flag");
+  EXPECT_EQ("-1", info.current_value);
+  EXPECT_EQ("-1", info.default_value);
+  EXPECT_TRUE(info.is_default);
+}
+
+
 }  // unnamed namespace
 
-static int main(int argc, char **argv) {
-
+static int main(int argc, char** argv) {
   // Run unit tests only if called without arguments, otherwise this program
-  // is used by an "external" usage test
+  // is used by an "external" usage test.
   const bool run_tests = (argc == 1);
 
   // We need to call SetArgv before parsing flags, so our "test" argv will
@@ -1556,10 +1623,13 @@ static int main(int argc, char **argv) {
   MakeTmpdir(&FLAGS_test_tmpdir);
 
   int exit_status = 0;
-  if (run_tests) {
-	  fprintf(stdout, "Running the unit tests now...\n\n"); fflush(stdout);
-	  exit_status = RUN_ALL_TESTS();
-  } else fprintf(stderr, "\n\nPASS\n");
+  // If the test_filter flag is set, we run a subset of tests.
+  if (run_tests || !FLAGS_test_filter.empty()) {
+    fprintf(stdout, "Running the unit tests now...\n\n");
+    fflush(stdout);
+    exit_status = RUN_ALL_TESTS();
+  } else
+    fprintf(stderr, "\n\nPASS\n");
   ShutDownCommandLineFlags();
   return exit_status;
 }
@@ -1569,4 +1639,3 @@ static int main(int argc, char **argv) {
 int main(int argc, char** argv) {
   return GFLAGS_NAMESPACE::main(argc, argv);
 }
-
