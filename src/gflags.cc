@@ -1691,6 +1691,29 @@ bool ValidateCommandLineOption(const char* flagname, const char* value, string* 
 }
 
 // --------------------------------------------------------------------
+// ParseFlagValue()
+//    Parse a value of a flag type without involving any registered flag.
+// --------------------------------------------------------------------
+namespace {
+
+template <typename FlagType>
+bool ParseValueOfFlagType(const char* value, FlagType* out) {
+  // The FlagValue does not own 'out', and is not registered anywhere, so no flag is affected.
+  FlagValue flag_value(out, false);
+  return flag_value.ParseFrom(value);
+}
+
+}  // namespace
+
+bool ParseFlagValue(const char* value, bool* out) { return ParseValueOfFlagType(value, out); }
+bool ParseFlagValue(const char* value, int32* out) { return ParseValueOfFlagType(value, out); }
+bool ParseFlagValue(const char* value, uint32* out) { return ParseValueOfFlagType(value, out); }
+bool ParseFlagValue(const char* value, int64* out) { return ParseValueOfFlagType(value, out); }
+bool ParseFlagValue(const char* value, uint64* out) { return ParseValueOfFlagType(value, out); }
+bool ParseFlagValue(const char* value, double* out) { return ParseValueOfFlagType(value, out); }
+bool ParseFlagValue(const char* value, string* out) { return ParseValueOfFlagType(value, out); }
+
+// --------------------------------------------------------------------
 // FlagSaver
 // FlagSaverImpl
 //    This class stores the states of all flags at construct time,

@@ -248,6 +248,17 @@ extern GFLAGS_DLL_DECL std::string SetCommandLineOptionWithMode(const char* name
 
 extern GFLAGS_DLL_DECL bool ValidateCommandLineOption(const char* name, const char* value, std::string* err_msg);
 
+// Parse 'value' into '*out' the same way the value of a flag of that type is parsed when the flag
+// is set, and return false if the value would be rejected. No flag is read or modified, so this can
+// be used to interpret a value that is not assigned to any flag.
+extern GFLAGS_DLL_DECL bool ParseFlagValue(const char* value, bool* out);
+extern GFLAGS_DLL_DECL bool ParseFlagValue(const char* value, int32* out);
+extern GFLAGS_DLL_DECL bool ParseFlagValue(const char* value, uint32* out);
+extern GFLAGS_DLL_DECL bool ParseFlagValue(const char* value, int64* out);
+extern GFLAGS_DLL_DECL bool ParseFlagValue(const char* value, uint64* out);
+extern GFLAGS_DLL_DECL bool ParseFlagValue(const char* value, double* out);
+extern GFLAGS_DLL_DECL bool ParseFlagValue(const char* value, std::string* out);
+
 
 // --------------------------------------------------------------------
 // Saves the states (value, default value, whether the user has set
