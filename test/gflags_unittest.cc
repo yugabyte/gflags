@@ -1586,6 +1586,58 @@ TEST(ValidateFlagValueTest, BaseTest) {
   EXPECT_TRUE(info.is_default);
 }
 
+TEST(ParseFlagValueTest, BaseTest) {
+  bool bool_value = false;
+  int32 int32_value = 0;
+  uint32 uint32_value = 0;
+  int64 int64_value = 0;
+  uint64 uint64_value = 0;
+  double double_value = 0;
+  string string_value;
+
+  // Every type parses the values its flag type accepts.
+  EXPECT_TRUE(ParseFlagValue("yes", &bool_value));
+  EXPECT_TRUE(bool_value);
+  EXPECT_TRUE(ParseFlagValue("f", &bool_value));
+  EXPECT_FALSE(bool_value);
+
+  EXPECT_TRUE(ParseFlagValue("-5", &int32_value));
+  EXPECT_EQ(-5, int32_value);
+  EXPECT_TRUE(ParseFlagValue("5", &uint32_value));
+  EXPECT_EQ(5u, uint32_value);
+  EXPECT_TRUE(ParseFlagValue("-5", &int64_value));
+  EXPECT_EQ(-5, int64_value);
+  EXPECT_TRUE(ParseFlagValue("5", &uint64_value));
+  EXPECT_EQ(5u, uint64_value);
+  EXPECT_TRUE(ParseFlagValue("0.5", &double_value));
+  EXPECT_DOUBLE_EQ(0.5, double_value);
+  EXPECT_TRUE(ParseFlagValue("some value", &string_value));
+  EXPECT_EQ("some value", string_value);
+
+  // A leading 0x means base 16, and a leading 0 does not mean base 8.
+  EXPECT_TRUE(ParseFlagValue("0x10", &int32_value));
+  EXPECT_EQ(16, int32_value);
+  EXPECT_TRUE(ParseFlagValue("010", &int32_value));
+  EXPECT_EQ(10, int32_value);
+
+  // Bad values are rejected, and an empty value is legal only for strings.
+  EXPECT_FALSE(ParseFlagValue("maybe", &bool_value));
+  EXPECT_FALSE(ParseFlagValue("0.1xxx", &double_value));
+  EXPECT_FALSE(ParseFlagValue("-1", &uint32_value));
+  EXPECT_FALSE(ParseFlagValue("2147483648", &int32_value));
+  EXPECT_FALSE(ParseFlagValue("4294967296", &uint32_value));
+  EXPECT_FALSE(ParseFlagValue("", &int32_value));
+  EXPECT_TRUE(ParseFlagValue("", &string_value));
+  EXPECT_EQ("", string_value);
+
+  // Parsing does not touch any flag of the same type.
+  EXPECT_EQ("initial", FLAGS_test_str1);
+  EXPECT_DOUBLE_EQ(-1, FLAGS_test_double);
+  CommandLineFlagInfo info = GetCommandLineFlagInfoOrDie("test_double");
+  EXPECT_EQ("-1", info.current_value);
+  EXPECT_TRUE(info.is_default);
+}
+
 
 }  // unnamed namespace
 
